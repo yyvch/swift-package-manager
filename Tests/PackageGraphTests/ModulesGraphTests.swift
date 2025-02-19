@@ -1025,6 +1025,137 @@ final class ModulesGraphTests: XCTestCase {
         }
     }
 
+    func testProductDependencyWithSimilarNamesFromMultiplePackages() throws {
+        let fs = InMemoryFileSystem(emptyFiles:
+            "/flavors/Sources/Bitter/Bitter.swift",
+            "/farm/Sources/Butter/Butter.swift",
+            "/grocery/Sources/Grocery/Grocery.swift"
+        )
+
+        let observability = ObservabilitySystem.makeForTesting()
+        _ = try loadModulesGraph(
+            fileSystem: fs,
+            manifests: [
+                Manifest.createFileSystemManifest(
+                    displayName: "flavors",
+                    path: "/flavors",
+                    products: [ProductDescription(name: "Bitter", type: .library(.automatic), targets: ["Bitter"])],
+                    targets: [
+                        TargetDescription(name: "Bitter"),
+                    ]),
+                Manifest.createFileSystemManifest(
+                    displayName: "farm",
+                    path: "/farm",
+                    products: [ProductDescription(name: "Butter", type: .library(.automatic), targets: ["Butter"])],
+                    targets: [
+                        TargetDescription(name: "Butter"),
+                    ]),
+                Manifest.createRootManifest(
+                    displayName: "grocery",
+                    path: "/grocery",
+                    dependencies: [.fileSystem(path: "/farm"), .fileSystem(path: "/flavors")],
+                    targets: [
+                        TargetDescription(name: "Grocery", dependencies: [
+                            .product(name: "Biter", package: "farm"),
+                            .product(name: "Bitter", package: "flavors"),
+                        ]),
+                    ]),
+            ],
+            observabilityScope: observability.topScope
+        )
+
+        // We should expect matching to work only within the package we want even
+        // though there are lexically closer candidates in other packages.
+        testDiagnostics(observability.diagnostics) { result in
+            result.check(
+                diagnostic: "product 'Biter' required by package 'grocery' target 'Grocery' not found in package 'farm'. Did you mean 'Butter'?",
+                severity: .error
+            )
+        }
+    }
+
+    func testProductDependencyWithSimilarNamesFromProductTargetsNotProducts() throws {
+        let fs = InMemoryFileSystem(emptyFiles:
+            "/lunch/Sources/Lunch/Lunch.swift",
+            "/sandwhich/Sources/Sandwhich/Sandwhich.swift",
+            "/sandwhich/Sources/Bread/Bread.swift"
+        )
+
+        let observability = ObservabilitySystem.makeForTesting()
+        _ = try loadModulesGraph(
+            fileSystem: fs,
+            manifests: [
+                Manifest.createFileSystemManifest(
+                    displayName: "sandwhich",
+                    path: "/sandwhich",
+                    products: [ProductDescription(name: "Sandwhich", type: .library(.automatic), targets: ["Sandwhich"])],
+                    targets: [
+                        TargetDescription(name: "Sandwhich", dependencies: ["Bread"]),
+                        TargetDescription(name: "Bread"),
+                    ]),
+                Manifest.createRootManifest(
+                    displayName: "lunch",
+                    path: "/lunch",
+                    // Depends on a product which isn't actually declared in sandwhich,
+                    // but there's a target with the same name.
+                    dependencies: [.fileSystem(path: "/sandwhich")],
+                    targets: [
+                        TargetDescription(name: "Lunch", dependencies: [.product(name: "Bread", package: "sandwhich")]),
+                    ]),
+            ],
+            observabilityScope: observability.topScope
+        )
+
+        testDiagnostics(observability.diagnostics) { result in
+            result.check(
+                diagnostic: "product 'Bread' required by package 'lunch' target 'Lunch' not found in package 'sandwhich'.",
+                severity: .error
+            )
+        }
+    }
+
+    func testProductDependencyWithSimilarNamesFromLocalTargetsNotPackageProducts() throws {
+        let fs = InMemoryFileSystem(emptyFiles:
+            "/gauges/Sources/Chart/Chart.swift",
+            "/gauges/Sources/Value/Value.swift",
+            "/controls/Sources/Valve/Valve.swift"
+        )
+
+        let observability = ObservabilitySystem.makeForTesting()
+        _ = try loadModulesGraph(
+            fileSystem: fs,
+            manifests: [
+                Manifest.createFileSystemManifest(
+                    displayName: "controls",
+                    path: "/controls",
+                    products: [ProductDescription(name: "Valve", type: .library(.automatic), targets: ["Valve"])],
+                    targets: [
+                        TargetDescription(name: "Valve"),
+                    ]),
+                Manifest.createRootManifest(
+                    displayName: "gauges",
+                    path: "/gauges",
+                    // Target dependency should show the local target dependency, even though
+                    // there's a lexically-close product name in a different package.
+                    dependencies: [.fileSystem(path: "/controls")],
+                    targets: [
+                        TargetDescription(name: "Chart", dependencies: [
+                            "Valv",
+                            .product(name: "Valve", package: "controls")]),
+                        TargetDescription(name: "Value"),
+                    ]),
+            ],
+            observabilityScope: observability.topScope
+        )
+
+        testDiagnostics(observability.diagnostics) { result in
+            result.check(
+                diagnostic: "product 'Valv' required by package 'gauges' target 'Chart' not found. Did you mean 'Value'?",
+                severity: .error
+            )
+        }
+    }
+
     func testProductDependencyDeclaredInSamePackage() throws {
         let fs = InMemoryFileSystem(emptyFiles:
             "/Foo/Sources/FooTarget/src.swift",
@@ -2868,7 +2999,7 @@ final class ModulesGraphTests: XCTestCase {
                     targets: [
                         TargetDescription(
                             name: "aaa",
-                            dependencies: ["zzy"],
+                            dependencies: ["mmm"],
                             type: .executable
                         )
                     ]),
@@ -2893,7 +3024,7 @@ final class ModulesGraphTests: XCTestCase {
 
         testDiagnostics(observability.diagnostics) { result in
             result.check(
-                diagnostic: "product 'zzy' required by package 'aaa' target 'aaa' not found. Did you mean 'zzz'?",
+                diagnostic: "product 'mmm' required by package 'aaa' target 'aaa' not found.",
                 severity: .error
             )
         }
