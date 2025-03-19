@@ -10688,6 +10688,85 @@ final class WorkspaceTests: XCTestCase {
         }
     }
 
+    func testDuplicateIdentityDependenciesMultipleRoots() async throws {
+        let sandbox = AbsolutePath("/tmp/ws/")
+        let fs = InMemoryFileSystem()
+
+        let workspace = try await MockWorkspace(
+            sandbox: sandbox,
+            fileSystem: fs,
+            roots: [
+                MockPackage(
+                    name: "River",
+                    targets: [
+                        MockTarget(name: "RiverTarget", dependencies: [
+                            .product(name: "FlowingWaterProduct", package: "FlowingWaterPackage"),
+                        ]),
+                    ],
+                    products: [],
+                    dependencies: [
+                        .sourceControlWithDeprecatedName(
+                            name: "FlowingWaterPackage",
+                            path: "flowing/water",
+                            requirement: .upToNextMajor(from: "1.0.0")
+                        ),
+                    ],
+                ),
+                MockPackage(
+                    name: "Lake",
+                    targets: [
+                        MockTarget(name: "LakeTarget", dependencies: [
+                            .product(name: "StandingWaterProduct", package: "StandingWaterPackage"),
+                        ]),
+                    ],
+                    products: [],
+                    dependencies: [
+                        .sourceControlWithDeprecatedName(
+                            name: "StandingWaterPackage",
+                            path: "standing/water",
+                            requirement: .upToNextMajor(from: "1.0.0")
+                        ),
+                    ],
+                ),
+            ],
+            packages: [
+                MockPackage(
+                    name: "FlowingWaterPackage",
+                    path: "flowing/water",
+                    targets: [
+                        MockTarget(name: "FlowingWaterTarget"),
+                    ],
+                    products: [
+                        MockProduct(name: "FlowingWaterProduct", modules: ["FlowingWaterTarget"]),
+                    ],
+                    versions: ["1.0.0"]
+                ),
+
+                // This package triggers the conflict.
+                MockPackage(
+                    name: "StandingWaterPackage",
+                    path: "standing/water",
+                    targets: [
+                        MockTarget(name: "StandingWaterTarget"),
+                    ],
+                    products: [
+                        MockProduct(name: "StandingWaterProduct", modules: ["StandingWaterTarget"]),
+                    ],
+                    versions: ["1.0.0"]
+                ),
+            ]
+        )
+
+        try await workspace.checkPackageGraph(roots: ["River", "Lake"]) { _, diagnostics in
+            testDiagnostics(diagnostics) { result in
+                result.check(
+                    diagnostic: "Conflicting identity for water: dependency '/tmp/ws/pkgs/flowing/water' and dependency '/tmp/ws/pkgs/standing/water' both point to the same package identity 'water'. The dependencies are introduced through the following chains: (A) /tmp/ws/roots/river->/tmp/ws/pkgs/flowing/water (B) /tmp/ws/roots/lake->/tmp/ws/pkgs/standing/water. If there are multiple chains that lead to the same dependency, only the first chain is shown here. To see all chains use debug output option. To resolve the conflict, coordinate with the maintainer of the package that introduces the conflicting dependency.",
+                    severity: .error
+                )
+            }
+        }
+    }
+
     func testDuplicateTransitiveIdentityWithoutNames() async throws {
         let sandbox = AbsolutePath("/tmp/ws/")
         let fs = InMemoryFileSystem()
