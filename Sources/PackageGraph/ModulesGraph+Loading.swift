@@ -341,10 +341,13 @@ private func getPathInGraph(
     finish: CanonicalPackageLocation,
     graph: [ResolvedPackageBuilder]
 ) throws -> [[CanonicalPackageLocation]] {
-    let edges = Dictionary(uniqueKeysWithValues: try graph.map {(
+    let edges = try Dictionary(uniqueKeysWithValues: graph.map { try (
         $0.package.manifest.canonicalPackageLocation,
-        Set(try $0.package.manifest.dependenciesRequired(for: $0.productFilter, $0.enabledTraits).map(\.packageRef.canonicalLocation))
-    )})
+        Set(
+            $0.package.manifest.dependenciesRequired(for: $0.productFilter, $0.enabledTraits)
+                .map(\.packageRef.canonicalLocation)
+        )
+    ) })
     // Use BFS to find paths between start and finish.
     var queue: [(CanonicalPackageLocation, [CanonicalPackageLocation])] = []
     var foundPaths: [[CanonicalPackageLocation]] = []
@@ -452,10 +455,24 @@ private func createResolvedPackages(
                     .canonicalLocation && !resolvedPackage.allowedToOverride
                 {
                     let rootPackages = packageBuilders.filter { $0.allowedToOverride == true }
-                    let dependenciesPaths = try rootPackages.map { try getPathInGraph(start: $0.package.manifest.canonicalPackageLocation, finish: dependencyPackageRef.canonicalLocation, graph: packageBuilders) }.filter { !$0.isEmpty }.flatMap({$0})
-                    let otherDependenciesPaths = try rootPackages.map { try getPathInGraph(start: $0.package.manifest.canonicalPackageLocation, finish: resolvedPackage.package.manifest.canonicalPackageLocation, graph: packageBuilders) }.filter { !$0.isEmpty }.flatMap({$0})
-                    packageObservabilityScope.emit(debug: "Conflicting identity for \(dependency.identity): chains of dependencies for \(dependencyPackageRef.locationString): \(String(describing: dependenciesPaths))")
-                    packageObservabilityScope.emit(debug: "Conflicting identity for \(dependency.identity): chains of dependencies for \(resolvedPackage.package.manifest.packageLocation): \(String(describing: otherDependenciesPaths))")
+                    let dependenciesPaths = try rootPackages.map { try getPathInGraph(
+                        start: $0.package.manifest.canonicalPackageLocation,
+                        finish: dependencyPackageRef.canonicalLocation,
+                        graph: packageBuilders
+                    ) }.filter { !$0.isEmpty }.flatMap { $0 }
+                    let otherDependenciesPaths = try rootPackages.map { try getPathInGraph(
+                        start: $0.package.manifest.canonicalPackageLocation,
+                        finish: resolvedPackage.package.manifest.canonicalPackageLocation,
+                        graph: packageBuilders
+                    ) }.filter { !$0.isEmpty }.flatMap { $0 }
+                    packageObservabilityScope
+                        .emit(
+                            debug: "Conflicting identity for \(dependency.identity): chains of dependencies for \(dependencyPackageRef.locationString): \(String(describing: dependenciesPaths))"
+                        )
+                    packageObservabilityScope
+                        .emit(
+                            debug: "Conflicting identity for \(dependency.identity): chains of dependencies for \(resolvedPackage.package.manifest.packageLocation): \(String(describing: otherDependenciesPaths))"
+                        )
                     let error = PackageGraphError.dependencyAlreadySatisfiedByIdentifier(
                         package: package.identity.description,
                         identity: dependency.identity,
