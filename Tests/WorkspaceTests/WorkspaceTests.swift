@@ -9883,7 +9883,7 @@ final class WorkspaceTests: XCTestCase {
         try await workspace.checkPackageGraph(roots: ["Root"]) { _, diagnostics in
             testDiagnostics(diagnostics) { result in
                 result.check(
-                    diagnostic: "'root' dependency on '\(sandbox.appending(components: "pkgs", "bar", "utility"))' conflicts with dependency on '\(sandbox.appending(components: "pkgs", "foo", "utility"))' which has the same identity 'utility'",
+                    diagnostic: "Conflicting identity for utility: dependency '/tmp/ws/pkgs/bar/utility' and dependency '/tmp/ws/pkgs/foo/utility' both point to the same package identity 'utility'.",
                     severity: .error
                 )
             }
@@ -9944,7 +9944,7 @@ final class WorkspaceTests: XCTestCase {
         try await workspace.checkPackageGraph(roots: ["Root"]) { _, diagnostics in
             testDiagnostics(diagnostics) { result in
                 result.check(
-                    diagnostic: "'root' dependency on '\(sandbox.appending(components: "pkgs", "bar", "utility"))' conflicts with dependency on '\(sandbox.appending(components: "pkgs", "foo", "utility"))' which has the same identity 'utility'",
+                    diagnostic: "Conflicting identity for utility: dependency '/tmp/ws/pkgs/bar/utility' and dependency '/tmp/ws/pkgs/foo/utility' both point to the same package identity 'utility'.",
                     severity: .error
                 )
             }
@@ -10514,8 +10514,175 @@ final class WorkspaceTests: XCTestCase {
         try await workspace.checkPackageGraph(roots: ["Root"]) { _, diagnostics in
             testDiagnostics(diagnostics) { result in
                 result.check(
-                    diagnostic: "'bar' dependency on '\(sandbox.appending(components: "pkgs", "other", "utility"))' conflicts with dependency on '\(sandbox.appending(components: "pkgs", "foo", "utility"))' which has the same identity 'utility'",
+                    diagnostic: "Conflicting identity for utility: dependency '/tmp/ws/pkgs/other/utility' and dependency '/tmp/ws/pkgs/foo/utility' both point to the same package identity 'utility'.The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->/tmp/ws/pkgs/bar->/tmp/ws/pkgs/other/utility (B) /tmp/ws/roots/root->/tmp/ws/pkgs/foo/utility. If there are multiple chains that lead to the same dependency, only the first chain is shown here. To see all chains use debug output option. To resolve the conflict, coordinate with the maintainer of the package that introduces the conflicting dependency.",
                     severity: .error
+                )
+            }
+        }
+    }
+
+    func testDuplicateTransitiveIdentityMultiplePossibleChains() async throws {
+        let sandbox = AbsolutePath("/tmp/ws/")
+        let fs = InMemoryFileSystem()
+
+        let workspace = try await MockWorkspace(
+            sandbox: sandbox,
+            fileSystem: fs,
+            roots: [
+                MockPackage(
+                    name: "Root",
+                    targets: [
+                        MockTarget(name: "RootTarget", dependencies: [
+                            .product(name: "HouseProduct", package: "HousePackage"),
+                            .product(name: "ShackProduct", package: "ShackPackage"),
+                        ]),
+                    ],
+                    products: [],
+                    dependencies: [
+                        .sourceControlWithDeprecatedName(
+                            name: "HousePackage",
+                            path: "house",
+                            requirement: .upToNextMajor(from: "1.0.0")
+                        ),
+                        .sourceControlWithDeprecatedName(
+                            name: "ShackPackage",
+                            path: "shack",
+                            requirement: .upToNextMajor(from: "1.0.0")
+                        ),
+                    ],
+                ),
+            ],
+            packages: [
+                MockPackage(
+                    name: "HousePackage",
+                    path: "house",
+                    targets: [
+                        MockTarget(name: "HouseTarget", dependencies: [
+                            .product(name: "BudgetWindowProduct", package: "BudgetWindowPackage"),
+                            .product(name: "PremiumWindowProduct", package: "PremiumWindowPackage"),
+                        ]),
+                    ],
+                    products: [
+                        MockProduct(name: "HouseProduct", modules: ["HouseTarget"]),
+                    ],
+                    dependencies: [
+                        .sourceControlWithDeprecatedName(
+                            name: "BudgetWindowPackage",
+                            path: "budget_window",
+                            requirement: .upToNextMajor(from: "1.0.0")
+                        ),
+                        .sourceControlWithDeprecatedName(
+                            name: "PremiumWindowPackage",
+                            path: "premium_window",
+                            requirement: .upToNextMajor(from: "1.0.0")
+                        ),
+                    ],
+                    versions: ["1.0.0"]
+                ),
+                MockPackage(
+                    name: "ShackPackage",
+                    path: "shack",
+                    targets: [
+                        MockTarget(name: "ShackTarget", dependencies: [
+                            .product(name: "StandardGlassProduct", package: "StandardGlassPackage"),
+                        ]),
+                    ],
+                    products: [
+                        MockProduct(name: "ShackProduct", modules: ["ShackTarget"]),
+                    ],
+                    dependencies: [
+                        .sourceControlWithDeprecatedName(
+                            name: "StandardGlassPackage",
+                            path: "standard/glass",
+                            requirement: .upToNextMajor(from: "1.0.0")
+                        ),
+                    ],
+                    versions: ["1.0.0"]
+                ),
+                MockPackage(
+                    name: "BudgetWindowPackage",
+                    path: "budget_window",
+                    targets: [
+                        MockTarget(name: "BudgetWindowTarget", dependencies: [
+                            .product(name: "StandardGlassProduct", package: "StandardGlassPackage"),
+                        ]),
+                    ],
+                    products: [
+                        MockProduct(name: "BudgetWindowProduct", modules: ["BudgetWindowTarget"]),
+                    ],
+                    dependencies: [
+                        .sourceControlWithDeprecatedName(
+                            name: "StandardGlassPackage",
+                            path: "standard/glass",
+                            requirement: .upToNextMajor(from: "1.0.0")
+                        ),
+                    ],
+                    versions: ["1.0.0"]
+                ),
+                MockPackage(
+                    name: "PremiumWindowPackage",
+                    path: "premium_window",
+                    targets: [
+                        MockTarget(name: "PremiumWindowTarget", dependencies: [
+                            .product(name: "TemperedGlassProduct", package: "TemperedGlassPackage"),
+                        ]),
+                    ],
+                    products: [
+                        MockProduct(name: "PremiumWindowProduct", modules: ["PremiumWindowTarget"]),
+                    ],
+                    dependencies: [
+                        .sourceControlWithDeprecatedName(
+                            name: "TemperedGlassPackage",
+                            path: "tempered/glass",
+                            requirement: .upToNextMajor(from: "1.0.0")
+                        ),
+                    ],
+                    versions: ["1.0.0"]
+                ),
+                MockPackage(
+                    name: "StandardGlassPackage",
+                    path: "standard/glass",
+                    targets: [
+                        MockTarget(name: "StandardGlassTarget"),
+                    ],
+                    products: [
+                        MockProduct(name: "StandardGlassProduct", modules: ["StandardGlassTarget"]),
+                    ],
+                    versions: ["1.0.0"]
+                ),
+
+                // This package triggers the conflict.
+                MockPackage(
+                    name: "TemperedGlassPackage",
+                    path: "tempered/glass",
+                    targets: [
+                        MockTarget(name: "TemperedTarget"),
+                    ],
+                    products: [
+                        MockProduct(name: "TemperedGlassProduct", modules: ["TemperedGlassTarget"]),
+                    ],
+                    versions: ["1.0.0"]
+                ),
+            ]
+        )
+
+        try await workspace.checkPackageGraph(roots: ["Root"]) { _, diagnostics in
+            testDiagnostics(diagnostics) { result in
+                result.check(
+                    diagnostic: "Conflicting identity for glass: dependency '/tmp/ws/pkgs/tempered/glass' and dependency '/tmp/ws/pkgs/standard/glass' both point to the same package identity 'glass'.The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->/tmp/ws/pkgs/house->/tmp/ws/pkgs/premium_window->/tmp/ws/pkgs/tempered/glass (B) /tmp/ws/roots/root->/tmp/ws/pkgs/shack->/tmp/ws/pkgs/standard/glass. If there are multiple chains that lead to the same dependency, only the first chain is shown here. To see all chains use debug output option. To resolve the conflict, coordinate with the maintainer of the package that introduces the conflicting dependency.",
+                    severity: .error
+                )
+            }
+        }
+        try await workspace.checkPackageGraph(roots: ["Root"]) { _, diagnostics in
+            testPartialDiagnostics(diagnostics, minSeverity: .debug) { result in
+                result.checkUnordered(
+                    diagnostic: .contains("Conflicting identity for glass: chains of dependencies for /tmp/ws/pkgs/tempered/glass: [[/tmp/ws/roots/root, /tmp/ws/pkgs/house, /tmp/ws/pkgs/premium_window, /tmp/ws/pkgs/tempered/glass]]"),
+                    severity: .debug
+                )
+                result.checkUnordered(
+                    diagnostic: .contains("Conflicting identity for glass: chains of dependencies for /tmp/ws/pkgs/standard/glass: [[/tmp/ws/roots/root, /tmp/ws/pkgs/shack, /tmp/ws/pkgs/standard/glass], [/tmp/ws/roots/root, /tmp/ws/pkgs/house, /tmp/ws/pkgs/budget_window, /tmp/ws/pkgs/standard/glass]]"),
+                    severity: .debug
                 )
             }
         }
@@ -10593,7 +10760,7 @@ final class WorkspaceTests: XCTestCase {
         try await workspace.checkPackageGraph(roots: ["Root"]) { _, diagnostics in
             testDiagnostics(diagnostics) { result in
                 result.check(
-                    diagnostic: "'bar' dependency on '\(sandbox.appending(components: "pkgs", "other-foo", "utility"))' conflicts with dependency on '\(sandbox.appending(components: "pkgs", "foo", "utility"))' which has the same identity 'utility'. this will be escalated to an error in future versions of SwiftPM.",
+                    diagnostic: "Conflicting identity for utility: dependency '/tmp/ws/pkgs/other-foo/utility' and dependency '/tmp/ws/pkgs/foo/utility' both point to the same package identity 'utility'.The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->/tmp/ws/pkgs/bar->/tmp/ws/pkgs/other-foo/utility (B) /tmp/ws/roots/root->/tmp/ws/pkgs/foo/utility. If there are multiple chains that lead to the same dependency, only the first chain is shown here. To see all chains use debug output option. To resolve the conflict, coordinate with the maintainer of the package that introduces the conflicting dependency. This will be escalated to an error in future versions of SwiftPM.",
                     severity: .warning
                 )
                 // FIXME: rdar://72940946
@@ -10987,7 +11154,7 @@ final class WorkspaceTests: XCTestCase {
         try await workspace.checkPackageGraph(roots: ["Root"]) { _, diagnostics in
             testDiagnostics(diagnostics) { result in
                 result.check(
-                    diagnostic: "'bar' dependency on 'https://github.com/foo-moved/foo.git' conflicts with dependency on 'https://github.com/foo/foo.git' which has the same identity 'foo'. this will be escalated to an error in future versions of SwiftPM.",
+                    diagnostic: "Conflicting identity for foo: dependency 'github.com/foo-moved/foo' and dependency 'github.com/foo/foo' both point to the same package identity 'foo'.The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->/tmp/ws/pkgs/bar->github.com/foo-moved/foo (B) /tmp/ws/roots/root->github.com/foo/foo. If there are multiple chains that lead to the same dependency, only the first chain is shown here. To see all chains use debug output option. To resolve the conflict, coordinate with the maintainer of the package that introduces the conflicting dependency. This will be escalated to an error in future versions of SwiftPM.",
                     severity: .warning
                 )
             }
@@ -11200,10 +11367,8 @@ final class WorkspaceTests: XCTestCase {
 
         try await workspace.checkPackageGraph(roots: ["Root"]) { _, diagnostics in
             testDiagnostics(diagnostics) { result in
-                // FIXME: rdar://72940946
-                // we need to improve this situation or diagnostics when working on identity
                 result.check(
-                    diagnostic: "'bar' dependency on '/tmp/ws/pkgs/other/utility' conflicts with dependency on '/tmp/ws/pkgs/foo/utility' which has the same identity 'utility'",
+                    diagnostic: "Conflicting identity for utility: dependency '/tmp/ws/pkgs/other/utility' and dependency '/tmp/ws/pkgs/foo/utility' both point to the same package identity 'utility'.The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->/tmp/ws/pkgs/foo/utility->/tmp/ws/pkgs/bar->/tmp/ws/pkgs/other/utility (B) /tmp/ws/roots/root->/tmp/ws/pkgs/foo/utility. If there are multiple chains that lead to the same dependency, only the first chain is shown here. To see all chains use debug output option. To resolve the conflict, coordinate with the maintainer of the package that introduces the conflicting dependency.",
                     severity: .error
                 )
             }
@@ -13255,7 +13420,7 @@ final class WorkspaceTests: XCTestCase {
             try await workspace.checkPackageGraph(roots: ["root"]) { _, diagnostics in
                 testDiagnostics(diagnostics) { result in
                     result.check(
-                        diagnostic: "'root' dependency on 'org.foo' conflicts with dependency on 'https://git/org/foo' which has the same identity 'org.foo'",
+                        diagnostic: "Conflicting identity for org.foo: dependency 'org.foo' and dependency 'https://git/org/foo' both point to the same package identity 'org.foo'.",
                         severity: .error
                     )
                 }
@@ -13272,7 +13437,7 @@ final class WorkspaceTests: XCTestCase {
             try await workspace.checkPackageGraph(roots: ["root"]) { _, diagnostics in
                 testDiagnostics(diagnostics) { result in
                     result.check(
-                        diagnostic: "'root' dependency on 'org.foo' conflicts with dependency on 'org.foo' which has the same identity 'org.foo'",
+                        diagnostic: "Conflicting identity for org.foo: dependency 'org.foo' and dependency 'org.foo' both point to the same package identity 'org.foo'.",
                         severity: .error
                     )
                 }
@@ -13374,7 +13539,7 @@ final class WorkspaceTests: XCTestCase {
                 testDiagnostics(diagnostics) { result in
                     result.check(
                         diagnostic: .contains("""
-                        'bar' dependency on 'org.foo' conflicts with dependency on 'https://git/org/foo' which has the same identity 'org.foo'.
+                        dependency 'org.foo' and dependency 'git/org/foo' both point to the same package identity 'org.foo'.The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->git/org/bar->org.foo (B) /tmp/ws/roots/root->git/org/foo.
                         """),
                         severity: .warning
                     )
@@ -13537,7 +13702,7 @@ final class WorkspaceTests: XCTestCase {
                 testDiagnostics(diagnostics) { result in
                     result.check(
                         diagnostic: .contains("""
-                        'org.bar' dependency on 'org.foo' conflicts with dependency on 'https://git/org/foo' which has the same identity 'org.foo'.
+                        dependency 'org.foo' and dependency 'git/org/foo' both point to the same package identity 'org.foo'.The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->org.bar->org.foo (B) /tmp/ws/roots/root->git/org/foo.
                         """),
                         severity: .warning
                     )
@@ -13800,7 +13965,7 @@ final class WorkspaceTests: XCTestCase {
                 testDiagnostics(diagnostics) { result in
                     result.check(
                         diagnostic: .contains("""
-                        'org.bar' dependency on 'https://git/org/foo' conflicts with dependency on 'org.foo' which has the same identity 'org.foo'.
+                        dependency 'git/org/foo' and dependency 'org.foo' both point to the same package identity 'org.foo'.The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->org.bar->git/org/foo (B) /tmp/ws/roots/root->org.foo.
                         """),
                         severity: .warning
                     )
@@ -14087,7 +14252,7 @@ final class WorkspaceTests: XCTestCase {
                 testDiagnostics(diagnostics) { result in
                     result.check(
                         diagnostic: .contains("""
-                        'org.foo' dependency on 'https://git/org/baz' conflicts with dependency on 'org.baz' which has the same identity 'org.baz'.
+                        dependency 'git/org/baz' and dependency 'org.baz' both point to the same package identity 'org.baz'.The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->org.foo->git/org/baz (B) /tmp/ws/roots/root->org.bar->org.baz.
                         """),
                         severity: .warning
                     )
@@ -14382,7 +14547,7 @@ final class WorkspaceTests: XCTestCase {
                 testDiagnostics(diagnostics) { result in
                     result.check(
                         diagnostic: .contains("""
-                        'org.bar' dependency on 'org.foo' conflicts with dependency on 'https://git/org/foo' which has the same identity 'org.foo'.
+                        dependency 'org.foo' and dependency 'git/org/foo' both point to the same package identity 'org.foo'.The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->org.bar->org.foo (B) /tmp/ws/roots/root->git/org/foo.
                         """),
                         severity: .warning
                     )
@@ -14412,7 +14577,7 @@ final class WorkspaceTests: XCTestCase {
                 testDiagnostics(diagnostics) { result in
                     result.check(
                         diagnostic: .contains("""
-                        'org.bar' dependency on 'org.foo' conflicts with dependency on 'https://git/org/foo' which has the same identity 'org.foo'.
+                        dependency 'org.foo' and dependency 'git/org/foo' both point to the same package identity 'org.foo'.The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->org.bar->org.foo (B) /tmp/ws/roots/root->git/org/foo.
                         """),
                         severity: .warning
                     )
