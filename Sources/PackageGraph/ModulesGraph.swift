@@ -313,7 +313,7 @@ extension PackageGraphError: CustomStringConvertible {
             if !dependencyPath.isEmpty && !otherDependencyPath.isEmpty {
                 let chainA = dependencyPath.map { String(describing: $0) }.joined(separator: "->")
                 let chainB = otherDependencyPath.map { String(describing: $0) }.joined(separator: "->")
-                description += "The dependencies are introduced through the following chains: (A) \(chainA) (B) \(chainB). If there are multiple chains that lead to the same dependency, only the first chain is shown here. To see all chains use debug output option. To resolve the conflict, coordinate with the maintainer of the package that introduces the conflicting dependency."
+                description += " The dependencies are introduced through the following chains: (A) \(chainA) (B) \(chainB). If there are multiple chains that lead to the same dependency, only the first chain is shown here. To see all chains use debug output option. To resolve the conflict, coordinate with the maintainer of the package that introduces the conflicting dependency."
             }
             return description
 

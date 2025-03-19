@@ -10514,7 +10514,7 @@ final class WorkspaceTests: XCTestCase {
         try await workspace.checkPackageGraph(roots: ["Root"]) { _, diagnostics in
             testDiagnostics(diagnostics) { result in
                 result.check(
-                    diagnostic: "Conflicting identity for utility: dependency '/tmp/ws/pkgs/other/utility' and dependency '/tmp/ws/pkgs/foo/utility' both point to the same package identity 'utility'.The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->/tmp/ws/pkgs/bar->/tmp/ws/pkgs/other/utility (B) /tmp/ws/roots/root->/tmp/ws/pkgs/foo/utility. If there are multiple chains that lead to the same dependency, only the first chain is shown here. To see all chains use debug output option. To resolve the conflict, coordinate with the maintainer of the package that introduces the conflicting dependency.",
+                    diagnostic: "Conflicting identity for utility: dependency '/tmp/ws/pkgs/other/utility' and dependency '/tmp/ws/pkgs/foo/utility' both point to the same package identity 'utility'. The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->/tmp/ws/pkgs/bar->/tmp/ws/pkgs/other/utility (B) /tmp/ws/roots/root->/tmp/ws/pkgs/foo/utility. If there are multiple chains that lead to the same dependency, only the first chain is shown here. To see all chains use debug output option. To resolve the conflict, coordinate with the maintainer of the package that introduces the conflicting dependency.",
                     severity: .error
                 )
             }
@@ -10669,7 +10669,7 @@ final class WorkspaceTests: XCTestCase {
         try await workspace.checkPackageGraph(roots: ["Root"]) { _, diagnostics in
             testDiagnostics(diagnostics) { result in
                 result.check(
-                    diagnostic: "Conflicting identity for glass: dependency '/tmp/ws/pkgs/tempered/glass' and dependency '/tmp/ws/pkgs/standard/glass' both point to the same package identity 'glass'.The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->/tmp/ws/pkgs/house->/tmp/ws/pkgs/premium_window->/tmp/ws/pkgs/tempered/glass (B) /tmp/ws/roots/root->/tmp/ws/pkgs/shack->/tmp/ws/pkgs/standard/glass. If there are multiple chains that lead to the same dependency, only the first chain is shown here. To see all chains use debug output option. To resolve the conflict, coordinate with the maintainer of the package that introduces the conflicting dependency.",
+                    diagnostic: "Conflicting identity for glass: dependency '/tmp/ws/pkgs/tempered/glass' and dependency '/tmp/ws/pkgs/standard/glass' both point to the same package identity 'glass'. The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->/tmp/ws/pkgs/house->/tmp/ws/pkgs/premium_window->/tmp/ws/pkgs/tempered/glass (B) /tmp/ws/roots/root->/tmp/ws/pkgs/shack->/tmp/ws/pkgs/standard/glass. If there are multiple chains that lead to the same dependency, only the first chain is shown here. To see all chains use debug output option. To resolve the conflict, coordinate with the maintainer of the package that introduces the conflicting dependency.",
                     severity: .error
                 )
             }
@@ -10760,7 +10760,7 @@ final class WorkspaceTests: XCTestCase {
         try await workspace.checkPackageGraph(roots: ["Root"]) { _, diagnostics in
             testDiagnostics(diagnostics) { result in
                 result.check(
-                    diagnostic: "Conflicting identity for utility: dependency '/tmp/ws/pkgs/other-foo/utility' and dependency '/tmp/ws/pkgs/foo/utility' both point to the same package identity 'utility'.The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->/tmp/ws/pkgs/bar->/tmp/ws/pkgs/other-foo/utility (B) /tmp/ws/roots/root->/tmp/ws/pkgs/foo/utility. If there are multiple chains that lead to the same dependency, only the first chain is shown here. To see all chains use debug output option. To resolve the conflict, coordinate with the maintainer of the package that introduces the conflicting dependency. This will be escalated to an error in future versions of SwiftPM.",
+                    diagnostic: "Conflicting identity for utility: dependency '/tmp/ws/pkgs/other-foo/utility' and dependency '/tmp/ws/pkgs/foo/utility' both point to the same package identity 'utility'. The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->/tmp/ws/pkgs/bar->/tmp/ws/pkgs/other-foo/utility (B) /tmp/ws/roots/root->/tmp/ws/pkgs/foo/utility. If there are multiple chains that lead to the same dependency, only the first chain is shown here. To see all chains use debug output option. To resolve the conflict, coordinate with the maintainer of the package that introduces the conflicting dependency. This will be escalated to an error in future versions of SwiftPM.",
                     severity: .warning
                 )
                 // FIXME: rdar://72940946
@@ -11154,7 +11154,7 @@ final class WorkspaceTests: XCTestCase {
         try await workspace.checkPackageGraph(roots: ["Root"]) { _, diagnostics in
             testDiagnostics(diagnostics) { result in
                 result.check(
-                    diagnostic: "Conflicting identity for foo: dependency 'github.com/foo-moved/foo' and dependency 'github.com/foo/foo' both point to the same package identity 'foo'.The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->/tmp/ws/pkgs/bar->github.com/foo-moved/foo (B) /tmp/ws/roots/root->github.com/foo/foo. If there are multiple chains that lead to the same dependency, only the first chain is shown here. To see all chains use debug output option. To resolve the conflict, coordinate with the maintainer of the package that introduces the conflicting dependency. This will be escalated to an error in future versions of SwiftPM.",
+                    diagnostic: "Conflicting identity for foo: dependency 'github.com/foo-moved/foo' and dependency 'github.com/foo/foo' both point to the same package identity 'foo'. The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->/tmp/ws/pkgs/bar->github.com/foo-moved/foo (B) /tmp/ws/roots/root->github.com/foo/foo. If there are multiple chains that lead to the same dependency, only the first chain is shown here. To see all chains use debug output option. To resolve the conflict, coordinate with the maintainer of the package that introduces the conflicting dependency. This will be escalated to an error in future versions of SwiftPM.",
                     severity: .warning
                 )
             }
@@ -11368,7 +11368,7 @@ final class WorkspaceTests: XCTestCase {
         try await workspace.checkPackageGraph(roots: ["Root"]) { _, diagnostics in
             testDiagnostics(diagnostics) { result in
                 result.check(
-                    diagnostic: "Conflicting identity for utility: dependency '/tmp/ws/pkgs/other/utility' and dependency '/tmp/ws/pkgs/foo/utility' both point to the same package identity 'utility'.The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->/tmp/ws/pkgs/foo/utility->/tmp/ws/pkgs/bar->/tmp/ws/pkgs/other/utility (B) /tmp/ws/roots/root->/tmp/ws/pkgs/foo/utility. If there are multiple chains that lead to the same dependency, only the first chain is shown here. To see all chains use debug output option. To resolve the conflict, coordinate with the maintainer of the package that introduces the conflicting dependency.",
+                    diagnostic: "Conflicting identity for utility: dependency '/tmp/ws/pkgs/other/utility' and dependency '/tmp/ws/pkgs/foo/utility' both point to the same package identity 'utility'. The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->/tmp/ws/pkgs/foo/utility->/tmp/ws/pkgs/bar->/tmp/ws/pkgs/other/utility (B) /tmp/ws/roots/root->/tmp/ws/pkgs/foo/utility. If there are multiple chains that lead to the same dependency, only the first chain is shown here. To see all chains use debug output option. To resolve the conflict, coordinate with the maintainer of the package that introduces the conflicting dependency.",
                     severity: .error
                 )
             }
@@ -13539,7 +13539,7 @@ final class WorkspaceTests: XCTestCase {
                 testDiagnostics(diagnostics) { result in
                     result.check(
                         diagnostic: .contains("""
-                        dependency 'org.foo' and dependency 'git/org/foo' both point to the same package identity 'org.foo'.The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->git/org/bar->org.foo (B) /tmp/ws/roots/root->git/org/foo.
+                        dependency 'org.foo' and dependency 'git/org/foo' both point to the same package identity 'org.foo'. The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->git/org/bar->org.foo (B) /tmp/ws/roots/root->git/org/foo.
                         """),
                         severity: .warning
                     )
@@ -13702,7 +13702,7 @@ final class WorkspaceTests: XCTestCase {
                 testDiagnostics(diagnostics) { result in
                     result.check(
                         diagnostic: .contains("""
-                        dependency 'org.foo' and dependency 'git/org/foo' both point to the same package identity 'org.foo'.The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->org.bar->org.foo (B) /tmp/ws/roots/root->git/org/foo.
+                        dependency 'org.foo' and dependency 'git/org/foo' both point to the same package identity 'org.foo'. The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->org.bar->org.foo (B) /tmp/ws/roots/root->git/org/foo.
                         """),
                         severity: .warning
                     )
@@ -13965,7 +13965,7 @@ final class WorkspaceTests: XCTestCase {
                 testDiagnostics(diagnostics) { result in
                     result.check(
                         diagnostic: .contains("""
-                        dependency 'git/org/foo' and dependency 'org.foo' both point to the same package identity 'org.foo'.The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->org.bar->git/org/foo (B) /tmp/ws/roots/root->org.foo.
+                        dependency 'git/org/foo' and dependency 'org.foo' both point to the same package identity 'org.foo'. The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->org.bar->git/org/foo (B) /tmp/ws/roots/root->org.foo.
                         """),
                         severity: .warning
                     )
@@ -14252,7 +14252,7 @@ final class WorkspaceTests: XCTestCase {
                 testDiagnostics(diagnostics) { result in
                     result.check(
                         diagnostic: .contains("""
-                        dependency 'git/org/baz' and dependency 'org.baz' both point to the same package identity 'org.baz'.The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->org.foo->git/org/baz (B) /tmp/ws/roots/root->org.bar->org.baz.
+                        dependency 'git/org/baz' and dependency 'org.baz' both point to the same package identity 'org.baz'. The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->org.foo->git/org/baz (B) /tmp/ws/roots/root->org.bar->org.baz.
                         """),
                         severity: .warning
                     )
@@ -14547,7 +14547,7 @@ final class WorkspaceTests: XCTestCase {
                 testDiagnostics(diagnostics) { result in
                     result.check(
                         diagnostic: .contains("""
-                        dependency 'org.foo' and dependency 'git/org/foo' both point to the same package identity 'org.foo'.The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->org.bar->org.foo (B) /tmp/ws/roots/root->git/org/foo.
+                        dependency 'org.foo' and dependency 'git/org/foo' both point to the same package identity 'org.foo'. The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->org.bar->org.foo (B) /tmp/ws/roots/root->git/org/foo.
                         """),
                         severity: .warning
                     )
@@ -14577,7 +14577,7 @@ final class WorkspaceTests: XCTestCase {
                 testDiagnostics(diagnostics) { result in
                     result.check(
                         diagnostic: .contains("""
-                        dependency 'org.foo' and dependency 'git/org/foo' both point to the same package identity 'org.foo'.The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->org.bar->org.foo (B) /tmp/ws/roots/root->git/org/foo.
+                        dependency 'org.foo' and dependency 'git/org/foo' both point to the same package identity 'org.foo'. The dependencies are introduced through the following chains: (A) /tmp/ws/roots/root->org.bar->org.foo (B) /tmp/ws/roots/root->git/org/foo.
                         """),
                         severity: .warning
                     )
