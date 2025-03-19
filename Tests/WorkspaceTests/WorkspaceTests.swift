@@ -10758,10 +10758,16 @@ final class WorkspaceTests: XCTestCase {
         )
 
         try await workspace.checkPackageGraph(roots: ["River", "Lake"]) { _, diagnostics in
-            testDiagnostics(diagnostics) { result in
-                result.check(
-                    diagnostic: "Conflicting identity for water: dependency '/tmp/ws/pkgs/flowing/water' and dependency '/tmp/ws/pkgs/standing/water' both point to the same package identity 'water'. The dependencies are introduced through the following chains: (A) /tmp/ws/roots/river->/tmp/ws/pkgs/flowing/water (B) /tmp/ws/roots/lake->/tmp/ws/pkgs/standing/water. If there are multiple chains that lead to the same dependency, only the first chain is shown here. To see all chains use debug output option. To resolve the conflict, coordinate with the maintainer of the package that introduces the conflicting dependency.",
-                    severity: .error
+            testPartialDiagnostics(diagnostics, minSeverity: .debug) { result in
+                // Order of roots processing is not deterministic. To make the test less brittle, we check debug
+                // output of individual conflicts instead of a summarized error message.
+                result.checkUnordered(
+                    diagnostic: .contains("Conflicting identity for water: chains of dependencies for /tmp/ws/pkgs/standing/water: [[/tmp/ws/roots/lake, /tmp/ws/pkgs/standing/water]]"),
+                    severity: .debug
+                )
+                result.checkUnordered(
+                    diagnostic: .contains("Conflicting identity for water: chains of dependencies for /tmp/ws/pkgs/flowing/water: [[/tmp/ws/roots/river, /tmp/ws/pkgs/flowing/water]]"),
+                    severity: .debug
                 )
             }
         }
