@@ -13580,7 +13580,7 @@ final class WorkspaceTests: XCTestCase {
             try await workspace.checkPackageGraph(roots: ["root"]) { _, diagnostics in
                 testDiagnostics(diagnostics) { result in
                     result.check(
-                        diagnostic: "Conflicting identity for org.foo: dependency 'org.foo' and dependency 'https://git/org/foo' both point to the same package identity 'org.foo'.",
+                        diagnostic: "Conflicting identity for org.foo: dependency 'org.foo' and dependency 'git/org/foo' both point to the same package identity 'org.foo'.",
                         severity: .error
                     )
                 }

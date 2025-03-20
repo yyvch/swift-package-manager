@@ -442,8 +442,8 @@ private func createResolvedPackages(
                     let error = PackageGraphError.dependencyAlreadySatisfiedByIdentifier(
                         package: package.identity.description,
                         identity: dependency.identity,
-                        dependencyLocation: dependencyPackageRef.locationString,
-                        otherDependencyLocation: resolvedPackage.package.manifest.packageLocation
+                        dependencyLocation: dependencyPackageRef.canonicalLocation.description,
+                        otherDependencyLocation: resolvedPackage.package.manifest.canonicalPackageLocation.description,
                     )
                     return packageObservabilityScope.emit(error)
                 }
